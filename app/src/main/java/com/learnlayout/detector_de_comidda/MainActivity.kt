@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.learnlayout.detector_de_comidda.databinding.ActivityMainBinding
+import com.learnlayout.detector_de_comidda.ui.attachSpring
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
@@ -57,6 +58,48 @@ class MainActivity : AppCompatActivity() {
         binding.btnAnalizar.setOnClickListener {
             showBottomSheet()
         }
+
+        // Animación de entrada escalonada
+        val elements = listOf(
+            binding.decorTop,
+            binding.tvTitle,
+            binding.titleUnderline,
+            binding.btnAnalizar,
+            binding.tvHint
+        )
+        val anim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.slide_fade_up)
+        elements.forEachIndexed { index, view ->
+            view.alpha = 0f
+            view.postDelayed({
+                view.alpha = 1f
+                view.startAnimation(anim)
+            }, index * 80L)
+        }
+
+        // Animación ambient arranca después de la entrada
+        binding.root.postDelayed({ breatheIn() }, elements.size * 80L + 500L)
+
+        binding.btnAnalizar.attachSpring()
+    }
+
+    private fun breatheIn() {
+        binding.decorCircle.animate()
+            .scaleX(1.12f).scaleY(1.12f)
+            .alpha(0.12f)
+            .setDuration(2200)
+            .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+            .withEndAction { breatheOut() }
+            .start()
+    }
+
+    private fun breatheOut() {
+        binding.decorCircle.animate()
+            .scaleX(1f).scaleY(1f)
+            .alpha(0.06f)
+            .setDuration(2200)
+            .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+            .withEndAction { breatheIn() }
+            .start()
     }
 
     private fun showBottomSheet() {
@@ -64,20 +107,24 @@ class MainActivity : AppCompatActivity() {
         val sheetView = layoutInflater.inflate(R.layout.bottom_sheet_options, null)
         dialog.setContentView(sheetView)
 
-        // Fondo transparente para que se vea el background del layout
         dialog.window?.findViewById<android.view.View>(
             com.google.android.material.R.id.design_bottom_sheet
         )?.setBackgroundResource(android.R.color.transparent)
 
-        sheetView.findViewById<android.view.View>(R.id.optCamera).setOnClickListener {
+        val optCamera = sheetView.findViewById<android.view.View>(R.id.optCamera)
+        val optGallery = sheetView.findViewById<android.view.View>(R.id.optGallery)
+
+        optCamera.setOnClickListener {
             dialog.dismiss()
             checkCameraPermissionAndLaunch()
         }
-
-        sheetView.findViewById<android.view.View>(R.id.optGallery).setOnClickListener {
+        optGallery.setOnClickListener {
             dialog.dismiss()
             galleryLauncher.launch("image/*")
         }
+
+        optCamera.attachSpring()
+        optGallery.attachSpring()
 
         dialog.show()
     }
@@ -108,5 +155,10 @@ class MainActivity : AppCompatActivity() {
             putExtra("image_uri", uriString)
         }
         startActivity(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        binding.decorCircle.animate().cancel()
     }
 }
