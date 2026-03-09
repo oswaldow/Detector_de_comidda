@@ -55,11 +55,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnAnalizar.setOnClickListener {
-            showBottomSheet()
-        }
+        binding.btnAnalizar.setOnClickListener { showBottomSheet() }
 
-        // Animación de entrada escalonada
         val elements = listOf(
             binding.decorTop,
             binding.tvTitle,
@@ -76,9 +73,7 @@ class MainActivity : AppCompatActivity() {
             }, index * 80L)
         }
 
-        // Animación ambient arranca después de la entrada
         binding.root.postDelayed({ breatheIn() }, elements.size * 80L + 500L)
-
         binding.btnAnalizar.attachSpring()
     }
 
@@ -111,17 +106,11 @@ class MainActivity : AppCompatActivity() {
             com.google.android.material.R.id.design_bottom_sheet
         )?.setBackgroundResource(android.R.color.transparent)
 
-        val optCamera = sheetView.findViewById<android.view.View>(R.id.optCamera)
+        val optCamera  = sheetView.findViewById<android.view.View>(R.id.optCamera)
         val optGallery = sheetView.findViewById<android.view.View>(R.id.optGallery)
 
-        optCamera.setOnClickListener {
-            dialog.dismiss()
-            checkCameraPermissionAndLaunch()
-        }
-        optGallery.setOnClickListener {
-            dialog.dismiss()
-            galleryLauncher.launch("image/*")
-        }
+        optCamera.setOnClickListener  { dialog.dismiss(); checkCameraPermissionAndLaunch() }
+        optGallery.setOnClickListener { dialog.dismiss(); galleryLauncher.launch("image/*") }
 
         optCamera.attachSpring()
         optGallery.attachSpring()
@@ -131,8 +120,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkCameraPermissionAndLaunch() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
+            == PackageManager.PERMISSION_GRANTED) {
             launchCamera()
         } else {
             permissionLauncher.launch(Manifest.permission.CAMERA)
@@ -141,20 +129,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun launchCamera() {
         val file = File(cacheDir, "foto_${System.currentTimeMillis()}.jpg")
-        val uri = FileProvider.getUriForFile(
-            this,
-            "${packageName}.provider",
-            file
-        )
+        val uri  = FileProvider.getUriForFile(this, "${packageName}.provider", file)
         currentPhotoUri = uri
         cameraLauncher.launch(uri)
     }
 
     private fun navigateToResult(uriString: String) {
-        val intent = Intent(this, ResultActivity::class.java).apply {
+        startActivity(Intent(this, ResultActivity::class.java).apply {
             putExtra("image_uri", uriString)
-        }
-        startActivity(intent)
+        })
+        overridePendingTransition(R.anim.slide_up_enter, android.R.anim.fade_out)
     }
 
     override fun onDestroy() {

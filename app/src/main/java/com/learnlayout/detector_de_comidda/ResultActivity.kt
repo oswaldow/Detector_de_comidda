@@ -32,11 +32,20 @@ class ResultActivity : AppCompatActivity() {
         binding = ActivityResultBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnBack.setOnClickListener { finish() }
+        binding.btnBack.setOnClickListener {
+            finish()
+            overridePendingTransition(android.R.anim.fade_in, R.anim.slide_down_exit)
+        }
         binding.btnBack.attachSpring()
 
         startDotsAnimation()
         processImage(intent.getStringExtra("image_uri") ?: "")
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        super.onBackPressed()
+        overridePendingTransition(android.R.anim.fade_in, R.anim.slide_down_exit)
     }
 
     private fun startDotsAnimation() {
@@ -49,7 +58,7 @@ class ResultActivity : AppCompatActivity() {
             val delay         = index * stepDelay
             val cycleDuration = dots.size * stepDelay + riseDuration * 2
 
-            val up   = ObjectAnimator.ofFloat(dot, "translationY", 0f, riseAmount).apply {
+            val up = ObjectAnimator.ofFloat(dot, "translationY", 0f, riseAmount).apply {
                 duration = riseDuration; interpolator = DecelerateInterpolator(); startDelay = delay }
             val down = ObjectAnimator.ofFloat(dot, "translationY", riseAmount, 0f).apply {
                 duration = riseDuration; interpolator = DecelerateInterpolator(); startDelay = delay + riseDuration }
@@ -59,11 +68,11 @@ class ResultActivity : AppCompatActivity() {
                 addListener(object : android.animation.AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: android.animation.Animator) {
                         if (dotAnimators.isNotEmpty()) {
-                            val nUp   = ObjectAnimator.ofFloat(dot, "translationY", 0f, riseAmount).apply {
+                            val nUp = ObjectAnimator.ofFloat(dot, "translationY", 0f, riseAmount).apply {
                                 duration = riseDuration; interpolator = DecelerateInterpolator() }
                             val nDown = ObjectAnimator.ofFloat(dot, "translationY", riseAmount, 0f).apply {
                                 duration = riseDuration; interpolator = DecelerateInterpolator() }
-                            val nSet  = AnimatorSet()
+                            val nSet = AnimatorSet()
                             nSet.playSequentially(nUp, nDown)
                             nSet.startDelay = cycleDuration - riseDuration * 2
                             nSet.addListener(this)
@@ -92,13 +101,43 @@ class ResultActivity : AppCompatActivity() {
             .forEach { it.translationY = 0f }
     }
 
-    private fun showResult(annotated: Bitmap) {
+    private fun showResult(bitmap: Bitmap, results: List<DetectionResult>) {
         stopDotsAnimation()
-        binding.imgResult.setImageBitmap(annotated)
+
+        // Mostrar imagen limpia (sin anotaciones)
+        binding.imgResult.setImageBitmap(bitmap)
         binding.imgResult.visibility = View.VISIBLE
         binding.imgResult.alpha = 0f
         binding.imgResult.animate().alpha(1f).setDuration(400)
-            .withEndAction { binding.loadingContainer.visibility = View.GONE }.start()
+            .withEndAction {
+                binding.loadingContainer.visibility = View.GONE
+
+                // Calcular el rect exacto donde fitCenter dibuja la imagen
+                val imageRect = getImageRect(bitmap)
+                binding.detectionOverlay.setImageRect(imageRect)
+                binding.detectionOverlay.visibility = View.VISIBLE
+
+                // Disparar animación escalonada de boxes
+                if (results.isNotEmpty()) {
+                    binding.detectionOverlay.showDetections(results)
+                }
+            }.start()
+    }
+
+    // Calcula el RectF donde fitCenter posiciona la imagen dentro del ImageView
+    private fun getImageRect(bitmap: Bitmap): RectF {
+        val vw = binding.imgResult.width.toFloat()
+        val vh = binding.imgResult.height.toFloat()
+        val bw = bitmap.width.toFloat()
+        val bh = bitmap.height.toFloat()
+
+        val scale = minOf(vw / bw, vh / bh)
+        val scaledW = bw * scale
+        val scaledH = bh * scale
+        val left = (vw - scaledW) / 2f
+        val top  = (vh - scaledH) / 2f
+
+        return RectF(left, top, left + scaledW, top + scaledH)
     }
 
     private fun processImage(imageUriString: String) {
@@ -108,13 +147,11 @@ class ResultActivity : AppCompatActivity() {
                 val bitmap = withContext(Dispatchers.IO) {
                     contentResolver.openInputStream(uri).use { BitmapFactory.decodeStream(it) }
                 }
-                val results  = withContext(Dispatchers.IO) {
+                val results = withContext(Dispatchers.IO) {
                     (application as App).foodDetector.detect(bitmap)
                 }
-                val annotated = withContext(Dispatchers.IO) {
-                    drawDetections(bitmap, results)
-                }
-                showResult(annotated)
+
+                showResult(bitmap, results)
 
                 if (results.isEmpty()) {
                     binding.tvDetectionsTitle.text = "Sin detecciones"
@@ -165,69 +202,4 @@ class DetectionAdapter(
     }
 
     override fun getItemCount() = detections.size
-}
-
-// ── Dibujar detecciones ───────────────────────────────────────────────────────
-
-fun drawDetections(bitmap: Bitmap, detections: List<DetectionResult>): Bitmap {
-    val mutable = bitmap.copy(Bitmap.Config.ARGB_8888, true)
-    val canvas  = Canvas(mutable)
-    val W = mutable.width.toFloat()
-    val H = mutable.height.toFloat()
-
-    val strokeW = (minOf(W, H) * 0.008f).coerceIn(3f, 10f)
-    val textSz  = (minOf(W, H) * 0.040f).coerceIn(22f, 42f)
-    val circleR = textSz * 0.40f
-
-    val boxPaint = Paint().apply {
-        style = Paint.Style.STROKE; strokeWidth = strokeW
-        color = Color.parseColor("#E8FF00"); isAntiAlias = true
-    }
-    val cornerPaint = Paint().apply {
-        style = Paint.Style.STROKE; strokeWidth = strokeW * 2.2f
-        color = Color.parseColor("#E8FF00"); isAntiAlias = true
-        strokeCap = Paint.Cap.ROUND
-    }
-    val bgPaint = Paint().apply {
-        color = Color.parseColor("#E8FF00"); style = Paint.Style.FILL
-        isAntiAlias = true
-    }
-    val textPaint = Paint().apply {
-        color = Color.parseColor("#0D0D0D"); textSize = textSz
-        typeface = Typeface.DEFAULT_BOLD; isAntiAlias = true
-        textAlign = Paint.Align.CENTER
-    }
-
-    for ((index, det) in detections.withIndex()) {
-        val left   = det.box.left   * W
-        val top    = det.box.top    * H
-        val right  = det.box.right  * W
-        val bottom = det.box.bottom * H
-        val boxW   = right - left
-        val boxH   = bottom - top
-
-        // Caja principal
-        canvas.drawRect(left, top, right, bottom, boxPaint)
-
-        // Esquinas reforzadas
-        val cLen = minOf(boxW, boxH) * 0.15f
-        canvas.drawLine(left,  top,    left + cLen,  top,           cornerPaint)
-        canvas.drawLine(left,  top,    left,          top + cLen,   cornerPaint)
-        canvas.drawLine(right, top,    right - cLen,  top,          cornerPaint)
-        canvas.drawLine(right, top,    right,          top + cLen,  cornerPaint)
-        canvas.drawLine(left,  bottom, left + cLen,  bottom,        cornerPaint)
-        canvas.drawLine(left,  bottom, left,          bottom - cLen, cornerPaint)
-        canvas.drawLine(right, bottom, right - cLen,  bottom,       cornerPaint)
-        canvas.drawLine(right, bottom, right,          bottom - cLen, cornerPaint)
-
-        // Círculo con número — encima de la esquina superior izquierda
-        val cx = left + circleR + strokeW
-        val cy = if (top >= circleR * 2 + strokeW) top - circleR else top + circleR + strokeW
-
-        canvas.drawCircle(cx, cy, circleR, bgPaint)
-        val textY = cy - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText("${index + 1}", cx, textY, textPaint)
-    }
-
-    return mutable
 }
