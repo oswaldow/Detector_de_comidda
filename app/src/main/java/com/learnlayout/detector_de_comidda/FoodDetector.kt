@@ -18,16 +18,19 @@ class FoodDetector(context: Context) {
     private val containThresh = 0.85f
     private val maxBoxRatio   = 0.92f  // descarta cajas que cubran >92% de la imagen
 
-    // 6 clases — debe coincidir EXACTAMENTE con el orden del data.yaml
     private val labels = listOf(
-        "Avocado",      // 0
-        "Carrot",       // 1
-        "Garlic",       // 2
-        "Garlic-Clove", // 3
-        "Apple",        // 4
-        "Half-Avocado"  // 5
+        "Manzana",    // 0 - Apple
+        "Aguacate",   // 1 - Avocado
+        "Plátano",    // 2 - Banana
+        "Pan",        // 3 - Bread
+        "Col",        // 4 - Cabbage
+        "Zanahoria",  // 5 - Carrot
+        "Ajo",        // 6 - Garlic
+        "Melón",      // 7 - Melon
+        "Calabaza",   // 8 - Pumpkin
+        "Sandía"      // 9 - Watermelon
     )
-    // nc = 6  →  output shape [1, 10, 8400]  (4 bbox + 6 clases)
+// nc = 10 → output shape [1, 14, 8400] (4 bbox + 10 clases)
 
     init {
         env = OrtEnvironment.getEnvironment()
