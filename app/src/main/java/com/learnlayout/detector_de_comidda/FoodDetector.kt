@@ -16,7 +16,7 @@ class FoodDetector(context: Context) {
     private val confThreshold = 0.55f
     private val iouThreshold  = 0.35f
     private val containThresh = 0.85f
-    private val maxBoxRatio   = 0.92f  // descarta cajas que cubran >92% de la imagen
+    private val maxBoxRatio   = 0.92f
 
     private val labels = listOf(
         "Manzana",    // 0 - Apple
