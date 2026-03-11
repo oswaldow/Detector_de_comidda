@@ -1,7 +1,6 @@
 package com.learnlayout.detector_de_comidda
 
 import android.Manifest
-import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -20,7 +19,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var currentPhotoUri: Uri? = null
-    private var borderAnimator: ValueAnimator? = null
 
     private val cameraLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
@@ -59,18 +57,9 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnAnalizar.setOnClickListener { showBottomSheet() }
 
-        // Letras del título caen una por una
-        binding.tvTitle.animateText(
-            label = "Detector\nde Comida",
-            textSizeSp = 52f,
-            textColorRes = android.graphics.Color.WHITE,
-            baseDelayMs = 0L,
-            charDelayMs = 60L
-        )
-
-        // Animación de entrada escalonada del resto de elementos
         val elements = listOf(
             binding.decorTop,
+            binding.tvTitle,
             binding.titleUnderline,
             binding.btnAnalizar,
             binding.tvHint
@@ -81,34 +70,11 @@ class MainActivity : AppCompatActivity() {
             view.postDelayed({
                 view.alpha = 1f
                 view.startAnimation(anim)
-            }, index * 80L + 600L)
+            }, index * 80L)
         }
 
-        // Círculo respira
-        binding.root.postDelayed({ breatheIn() }, 2000L)
-
-        // Borde animado arranca cuando el botón ya está en su lugar
-        binding.root.postDelayed({ startBorderAnimation() }, 1400L)
-
+        binding.root.postDelayed({ breatheIn() }, elements.size * 80L + 500L)
         binding.btnAnalizar.attachSpring()
-    }
-
-    private fun startBorderAnimation() {
-        binding.borderLight.animate()
-            .alpha(1f)
-            .setDuration(400)
-            .withEndAction {
-                borderAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-                    duration = 2500
-                    repeatCount = ValueAnimator.INFINITE
-                    repeatMode = ValueAnimator.REVERSE
-                    addUpdateListener {
-                        binding.borderLight.progress = it.animatedValue as Float
-                    }
-                    start()
-                }
-            }
-            .start()
     }
 
     private fun breatheIn() {
@@ -178,6 +144,5 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         binding.decorCircle.animate().cancel()
-        borderAnimator?.cancel()
     }
 }

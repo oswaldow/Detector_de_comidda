@@ -15,7 +15,6 @@ class AnimatedTextView @JvmOverloads constructor(
     }
 
     fun animateText(
-        label: String,
         textSizeSp: Float,
         textColorRes: Int,
         baseDelayMs: Long = 0L,
@@ -23,7 +22,6 @@ class AnimatedTextView @JvmOverloads constructor(
     ) {
         removeAllViews()
 
-        val lines = label.split("\n")
         var charIndex = 0
 
         lines.forEach { line ->

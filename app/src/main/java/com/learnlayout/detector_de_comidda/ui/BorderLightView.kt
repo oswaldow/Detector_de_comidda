@@ -36,7 +36,6 @@ class BorderLightView @JvmOverloads constructor(
         val pm = PathMeasure(path, true)
         val total = pm.length
 
-        // Top-center = 75% del recorrido CW
         val topCenter = total * 0.75f
 
         drawLight(canvas, pm, total, topCenter, progress, true)
@@ -55,8 +54,6 @@ class BorderLightView @JvmOverloads constructor(
         val dotRadius = 3f
         val gap = 9f
 
-        // Máximo 45% del total para no atravesarse
-        val travel = progress * total * 0.45f
         val tipPos = if (forward) {
             (topCenter + travel + total) % total
         } else {
@@ -79,7 +76,6 @@ class BorderLightView @JvmOverloads constructor(
 
             paint.color = Color.argb(
                 (alpha * 230).toInt().coerceIn(0, 255),
-                0xFF, 0xFF, 0xFF
             )
             canvas.drawCircle(dst[0], dst[1], dotRadius * alpha.coerceAtLeast(0.4f), paint)
 
