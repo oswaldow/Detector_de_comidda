@@ -31,16 +31,11 @@
         android:layout_marginTop="-60dp"
         android:layout_marginEnd="-60dp"/>
 
-    <!-- Titulo grande -->
-    <TextView
+    <!-- Titulo grande animado letra por letra -->
+    <com.learnlayout.detector_de_comidda.ui.AnimatedTextView
         android:id="@+id/tvTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Detector\nde Comida"
-        android:textSize="52sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:lineSpacingMultiplier="0.92"
         android:layout_marginTop="120dp"
         android:layout_marginStart="40dp"
         android:layout_marginEnd="40dp"
@@ -78,7 +73,20 @@
         android:layout_marginBottom="40dp"
         app:layout_constraintBottom_toTopOf="@id/tvHint"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Borde animado sobre el boton -->
+    <com.learnlayout.detector_de_comidda.ui.BorderLightView
+        android:id="@+id/borderLight"
+        android:layout_width="0dp"
+        android:layout_height="58dp"
+        android:alpha="0"
+        android:layout_marginStart="35dp"
+        android:layout_marginEnd="35dp"
+        android:layout_marginBottom="40dp"
+        app:layout_constraintBottom_toTopOf="@id/tvHint"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <TextView
         android:id="@+id/tvHint"
